@@ -7,7 +7,7 @@
 If you use this software, please cite:
 
 ```
-Picker Aggregator: A Multi-Model Ensemble of Machine Learning Pickers for Seismic Phase Detection and Association to Generate Comprehensive Seismic Catalogs
+Picker Aggregator: A Multi-Model Ensemble of Machine Learning Pickers for Seismic Phase Detection and Association to Generate Comprehensive Seismic Catalog North of Puerto Rico and Virgin Islands
 Asiye Aziz Zanjani and Heather R. DeShon (2025)
 ```
 
