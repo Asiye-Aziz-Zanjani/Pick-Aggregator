@@ -1,4 +1,4 @@
-# Picker Aggregator: Multi-Model Earthquake Detection System
+# Pick Aggregator: Multi-Model Earthquake Detection System
 
 **Developed by:** Asiye Aziz Zanjani, 2025
 
@@ -7,13 +7,12 @@
 If you use this software, please cite:
 
 ```
-Picker Aggregator: A Multi-Model Ensemble of Machine Learning Pickers for Seismic Phase Detection and Association to Generate Comprehensive Seismic Catalog North of Puerto Rico and Virgin Islands
-Asiye Aziz Zanjani and Heather R. DeShon (2025)
+Pick Aggregator: A Multi-Model Ensemble of Machine Learning Pickers to Generate an Onshore-Offshore Seismic Catalog for Puerto Rico and the Virgin Islands, Asiye Aziz Zanjani and Heather R. DeShon, SRL (2026)
 ```
 
 ## Overview
 
-Picker Aggregator is a comprehensive Python tool that combines multiple machine learning models to detect and catalog seismic events. It uses an ensemble approach, aggregating picks from different seismic phase detection models to improve accuracy and reliability in earthquake detection.
+Pick Aggregator is a comprehensive Python tool that combines multiple machine learning models to detect and catalog seismic events. It uses an ensemble approach, aggregating picks from different seismic phase detection models to improve accuracy and reliability in earthquake detection.
 
 ### Key Features
 
