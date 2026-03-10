@@ -86,7 +86,7 @@ PR_NETWORK = "PR"  # Land-based network code
 
 # Aggregation settings
 MIN_PICKERS_FOR_AGGREGATION = 2  # Minimum pickers that must agree
-TIME_TOLERANCE_SECONDS = 5.0     # Time window for matching picks
+TIME_TOLERANCE_SECONDS = 0.5     # Time window for matching picks
 ```
 
 ### 2. Run the Analysis
