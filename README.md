@@ -149,7 +149,7 @@ MIN_PICKERS_FOR_AGGREGATION = 2  # At least 2 pickers must detect the same pick
 TIME_TOLERANCE_SECONDS = 0.5     # Picks within 0.5 seconds are considered the same
 ```
 
-**Example:** If 3 pickers detect a P-wave arrival at a station within 5 seconds of each other, these are combined into a single, more reliable aggregated pick.
+**Example:** If 3 pickers detect a P-wave arrival at a station within 0.5 seconds of each other, these are combined into a single, more reliable aggregated pick.
 
 ### GAMMA Configuration
 
