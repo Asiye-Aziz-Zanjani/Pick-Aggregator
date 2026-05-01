@@ -86,7 +86,7 @@ PR_NETWORK = "PR"  # Land-based network code
 
 # Aggregation settings
 MIN_PICKERS_FOR_AGGREGATION = 2  # Minimum pickers that must agree
-TIME_TOLERANCE_SECONDS = 0.5     # Time window for matching picks
+TIME_TOLERANCE_SECONDS = 2     # Time window for matching picks
 ```
 
 ### 2. Run the Analysis
@@ -334,8 +334,19 @@ By aggregating their predictions, we:
 1. Each picker independently detects P and S waves
 2. Picks at the same station within `TIME_TOLERANCE_SECONDS` are clustered
 3. Only clusters with ≥ `MIN_PICKERS_FOR_AGGREGATION` picks are kept
-4. Average time and probability are calculated
-5. GAMMA associates picks into earthquake events
+4. Time and probability are calculated based on selected aggregation:
+# Aggregation method for combining timestamp and probability across pickers
+# Options:
+#   "mean"          - Simple arithmetic mean of all picks in the cluster
+#                     (original behaviour; treats all pickers equally)
+#   "highest_prob"  - Use the timestamp and probability of the single pick
+#                     with the highest probability; ignores the others for
+#                     the reported value while still requiring min_pickers
+#                     agreement to accept the cluster
+#   "weighted_mean" - Probability-weighted mean: picks with higher confidence
+#                     pull the timestamp and the reported probability more than
+#                     lower-confidence picks
+6. GAMMA associates picks into earthquake events
 
 ## Contributing
 
