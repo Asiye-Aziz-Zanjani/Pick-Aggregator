@@ -243,46 +243,60 @@ BATCH_SIZE = 100  # Number of traces processed together
 
 **How it works:**
 ```python
-def aggregate_picks(all_picks_data, min_pickers=2, time_tolerance=5.0):
-    # Groups picks by station and phase type (P or S)
-    for each (station, phase) combination:
-        
-        # Finds picks that are close in time
-        for pick1 in picks:
-            cluster = []
-            for pick2 in picks:
-                time_difference = abs(pick1.time - pick2.time)
-                
-                # If within tolerance, add to cluster
-                if time_difference <= time_tolerance:
-                    cluster.append(pick2)
-            
-            # Only keep if enough pickers agreed
-            if len(cluster) >= min_pickers:
-                # Calculate average time and probability
-                avg_time = mean(cluster_times)
-                avg_prob = mean(cluster_probs)
-                
-                # Create aggregated pick
-                save_aggregated_pick(avg_time, avg_prob, ...)
+def aggregate_picks(all_picks_data, min_pickers=MIN_PICKERS_FOR_AGGREGATION,
+                   time_tolerance=TIME_TOLERANCE_SECONDS,
+                   method=AGGREGATION_METHOD):
+    """
+    Aggregate picks detected by multiple pickers.
+
+    This function combines picks from different models that detected the
+    same seismic phase. Only picks detected by at least min_pickers models
+    within time_tolerance seconds are kept.
+
+    Algorithm:
+        1. Group picks by station and phase type
+        2. Find clusters of picks within time_tolerance
+        3. Keep only clusters with >= min_pickers detections
+        4. Compute a representative timestamp and probability using *method*
+
+    Args:
+        all_picks_data (dict): Dictionary of {picker_name: picks_dataframe}
+        min_pickers (int): Minimum number of pickers required
+        time_tolerance (float): Time window in seconds
+        method (str): Aggregation method – one of:
+            "mean"          Simple arithmetic mean (default / original).
+            "highest_prob"  Use the values from the highest-probability pick;
+                            other picks in the cluster still count towards
+                            min_pickers but do not shift the reported value.
+            "weighted_mean" Probability-weighted mean; more confident picks
+                            have greater influence on the reported timestamp
+                            and probability.
+
+    Returns:
+        pandas.DataFrame: Aggregated picks with additional columns:
+            - contributing_pickers: Comma-separated list of pickers
+            - num_contributing_pickers: Count of pickers that detected it
+            - aggregation_method: The method used (for traceability)
+
+    """
+    valid_methods = {"mean", "highest_prob", "weighted_mean"}
+    if method not in valid_methods:
+        raise ValueError(
+            f"Unknown aggregation method '{method}'. "
+            f"Choose from: {sorted(valid_methods)}"
+        )
 ```
 
 **Example scenario:**
 ```
-Station: ABC, Phase: P
+        If 3 pickers detect a P-wave at station ABC within 2 seconds:
+        - Pick 1: 12:34:56.123 (prob 0.85)
+        - Pick 2: 12:34:56.456 (prob 0.92)
+        - Pick 3: 12:34:59.789 (prob 0.78)
 
-Picker A detects at: 12:34:56.123 (prob: 0.85)
-Picker B detects at: 12:34:56.456 (prob: 0.92)
-Picker C detects at: 12:34:59.789 (prob: 0.78)
-
-With TIME_TOLERANCE_SECONDS = 5:
-- A and B are within 0.33 seconds → GROUPED
-- C is 3.66 seconds from A → GROUPED (within 5 seconds)
-
-With MIN_PICKERS_FOR_AGGREGATION = 2:
-- All 3 pickers detected it → ACCEPTED
-- Aggregated time: 12:34:57.456 (average)
-- Aggregated prob: 0.85 (average)
+        "mean"          → timestamp 12:34:57.456,  prob 0.850
+        "highest_prob"  → timestamp 12:34:56.456,  prob 0.920  (Pick 2)
+        "weighted_mean" → timestamp ~12:34:56.700, prob ~0.857  (skewed toward Pick 2)
 ```
 
 **Tuning aggregation:**
