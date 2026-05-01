@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Picker Aggregator: Multi-Model Earthquake Detection System
+Picker Aggregator: Multi-model Machine Learning Picker for Integrated Earthquake Catalog
 
 Developed by: Asiye Aziz Zanjani, 2025
 
 Citation:
-    Pick Aggregator: A Multi-Model Ensemble of Machine Learning Pickers to Generate an
-    Onshore-Offshore Seismic Catalog for Puerto Rico and the Virgin Islands,  
-    Asiye Aziz Zanjani, Heather R. DeShon, Seismological Research Letters (2026)
+    Picker Aggregator: A Multi-model Ensembel of Machine Learning Pickers for Seismic Phase
+    Detection and Association to Generate Comprehensive Seismic Catalog North of Puerto Rico 
+    and Virgin Islands, Asiye Aziz Zanjani and Heather R. DeShon (2025)
 
 Description:
     This script combines multiple machine learning models to detect seismic phases 
@@ -108,9 +108,22 @@ MIN_PICKERS_FOR_AGGREGATION = 2
 
 # Time window for considering picks as the same event (seconds)
 # Picks within this window are grouped together
-TIME_TOLERANCE_SECONDS = 5.0
+TIME_TOLERANCE_SECONDS = 2.0
 
 # TIP: Increase TIME_TOLERANCE_SECONDS if your clocks are not well synchronized
+
+# Aggregation method for combining timestamp and probability across pickers
+# Options:
+#   "mean"          - Simple arithmetic mean of all picks in the cluster
+#                     (original behaviour; treats all pickers equally)
+#   "highest_prob"  - Use the timestamp and probability of the single pick
+#                     with the highest probability; ignores the others for
+#                     the reported value while still requiring min_pickers
+#                     agreement to accept the cluster
+#   "weighted_mean" - Probability-weighted mean: picks with higher confidence
+#                     pull the timestamp and the reported probability more than
+#                     lower-confidence picks
+AGGREGATION_METHOD = "highest_prob"  # Choose: "mean", "highest_prob", "weighted_mean"
 
 # --------------------------------------------------------------------------------
 # PERFORMANCE AND MEMORY PARAMETERS
@@ -808,129 +821,225 @@ def convert_utm_to_latlon(x_km, y_km):
     return lat, lon
 
 
-def aggregate_picks(all_picks_data, min_pickers=MIN_PICKERS_FOR_AGGREGATION, 
-                   time_tolerance=TIME_TOLERANCE_SECONDS):
+def _resolve_cluster(cluster_picks, method):
+    """
+    Compute the representative timestamp and probability for one cluster of
+    picks using the requested aggregation method.
+
+    Args:
+        cluster_picks (list[pd.Series]): Rows from the combined picks DataFrame
+            that belong to a single cluster (already filtered to >= min_pickers).
+        method (str): One of "mean", "highest_prob", or "weighted_mean".
+
+    Returns:
+        tuple: (timestamp, probability)
+            timestamp – pandas Timestamp representing the aggregated pick time
+            probability – float representing the aggregated confidence
+
+    Method details
+    --------------
+    "mean"
+        Simple arithmetic mean of timestamps and probabilities.
+        All pickers are treated equally regardless of their confidence.
+        This is the original behaviour.
+
+    "highest_prob"
+        Selects the single pick with the maximum probability within the
+        cluster and reports its timestamp and probability verbatim.
+        The other picks in the cluster are still required to reach
+        min_pickers (i.e. they vote to *accept* the cluster) but do not
+        influence the reported values.  Use this when you trust the most
+        confident picker more than an average.
+
+    "weighted_mean"
+        Each pick contributes to the timestamp and probability in
+        proportion to its own probability score:
+
+            w_i       = prob_i
+            timestamp = Σ(w_i * t_i) / Σ(w_i)   [in epoch seconds]
+            prob      = Σ(w_i * prob_i) / Σ(w_i)
+
+        High-confidence picks pull the result towards themselves while
+        low-confidence picks have diminished influence.  Use this when
+        you want a consensus estimate that respects each picker's
+        certainty.
+    """
+    timestamps = pd.to_datetime([p['timestamp'] for p in cluster_picks])
+    probs      = np.array([p['prob'] for p in cluster_picks], dtype=float)
+
+    if method == "highest_prob":
+        best_idx  = int(np.argmax(probs))
+        out_ts    = timestamps[best_idx]
+        out_prob  = probs[best_idx]
+
+    elif method == "weighted_mean":
+        weights = probs  # use probability as weight
+        weight_sum = weights.sum()
+
+        if weight_sum == 0:
+            # Fallback to simple mean if all weights are zero
+            out_ts   = timestamps.mean()
+            out_prob = probs.mean()
+        else:
+            # Convert timestamps to float seconds for weighted arithmetic
+            epoch_sec = np.array([ts.timestamp() for ts in timestamps], dtype=float)
+            avg_epoch = np.dot(weights, epoch_sec) / weight_sum
+            out_ts    = pd.Timestamp(avg_epoch, unit='s', tz=timestamps[0].tz)
+            out_prob  = np.dot(weights, probs) / weight_sum
+
+    else:  # "mean" — original behaviour
+        out_ts   = timestamps.mean()
+        out_prob = probs.mean()
+
+    return out_ts, float(out_prob)
+
+
+def aggregate_picks(all_picks_data, min_pickers=MIN_PICKERS_FOR_AGGREGATION,
+                   time_tolerance=TIME_TOLERANCE_SECONDS,
+                   method=AGGREGATION_METHOD):
     """
     Aggregate picks detected by multiple pickers.
-    
+
     This function combines picks from different models that detected the
     same seismic phase. Only picks detected by at least min_pickers models
     within time_tolerance seconds are kept.
-    
+
     Algorithm:
         1. Group picks by station and phase type
         2. Find clusters of picks within time_tolerance
         3. Keep only clusters with >= min_pickers detections
-        4. Average the time and probability
-    
+        4. Compute a representative timestamp and probability using *method*
+
     Args:
         all_picks_data (dict): Dictionary of {picker_name: picks_dataframe}
         min_pickers (int): Minimum number of pickers required
         time_tolerance (float): Time window in seconds
-        
+        method (str): Aggregation method – one of:
+            "mean"          Simple arithmetic mean (default / original).
+            "highest_prob"  Use the values from the highest-probability pick;
+                            other picks in the cluster still count towards
+                            min_pickers but do not shift the reported value.
+            "weighted_mean" Probability-weighted mean; more confident picks
+                            have greater influence on the reported timestamp
+                            and probability.
+
     Returns:
         pandas.DataFrame: Aggregated picks with additional columns:
             - contributing_pickers: Comma-separated list of pickers
             - num_contributing_pickers: Count of pickers that detected it
-    
-    Example:
+            - aggregation_method: The method used (for traceability)
+
+    Examples:
         If 3 pickers detect a P-wave at station ABC within 5 seconds:
         - Pick 1: 12:34:56.123 (prob 0.85)
         - Pick 2: 12:34:56.456 (prob 0.92)
         - Pick 3: 12:34:59.789 (prob 0.78)
-        Result: Aggregated pick at 12:34:57.456 (average), prob 0.85 (average)
+
+        "mean"          → timestamp 12:34:57.456,  prob 0.850
+        "highest_prob"  → timestamp 12:34:56.456,  prob 0.920  (Pick 2)
+        "weighted_mean" → timestamp ~12:34:56.700, prob ~0.857  (skewed toward Pick 2)
     """
+    valid_methods = {"mean", "highest_prob", "weighted_mean"}
+    if method not in valid_methods:
+        raise ValueError(
+            f"Unknown aggregation method '{method}'. "
+            f"Choose from: {sorted(valid_methods)}"
+        )
+
     print(f"\n{'='*80}")
     print(f"STEP 4: AGGREGATING PICKS")
     print(f"{'='*80}")
     print(f"Minimum pickers required: {min_pickers}")
     print(f"Time tolerance: {time_tolerance} seconds")
-    
+    print(f"Aggregation method: {method}")
+
     # Combine all picks from all pickers
     all_picks = []
     for picker_name, picks_df in all_picks_data.items():
         if not picks_df.empty:
             picks_copy = picks_df.copy()
             all_picks.append(picks_copy)
-    
+
     if not all_picks:
         print("⚠ No picks available for aggregation")
         return pd.DataFrame()
-    
+
     combined_picks = pd.concat(all_picks, ignore_index=True)
     print(f"\nTotal picks from all pickers: {len(combined_picks)}")
-    
+
     # Count picks by picker
     picker_counts = Counter(combined_picks['picker'])
     print("\nPicks per picker:")
     for picker, count in sorted(picker_counts.items()):
         print(f"  {picker}: {count}")
-    
+
     # Group picks by station and phase type
     aggregated_picks = []
     grouped = combined_picks.groupby(['station', 'type'])
-    
+
     print(f"\nProcessing {len(grouped)} station-phase combinations...")
-    
+
     for (station, phase_type), group in grouped:
         # Sort by timestamp
         group = group.sort_values('timestamp')
-        
+
         # Find clusters of picks within time tolerance
         used_indices = set()
-        
+
         for i, pick1 in group.iterrows():
             if i in used_indices:
                 continue
-                
+
             # Find all picks within time tolerance
-            cluster_picks = []
+            cluster_picks  = []
             cluster_indices = set()
-            
+
             for j, pick2 in group.iterrows():
                 if j in used_indices:
                     continue
-                    
+
                 time_diff = abs((pick1['timestamp'] - pick2['timestamp']).total_seconds())
-                
+
                 # If within tolerance, add to cluster
                 if time_diff <= time_tolerance:
                     cluster_picks.append(pick2)
                     cluster_indices.add(j)
-            
+
             # Only keep if enough pickers agreed
             if len(cluster_picks) >= min_pickers:
-                # Calculate average timestamp and probability
-                avg_timestamp = pd.to_datetime([p['timestamp'] for p in cluster_picks]).mean()
-                avg_prob = np.mean([p['prob'] for p in cluster_picks])
+                # ----------------------------------------------------------
+                # Compute representative timestamp and probability
+                # ----------------------------------------------------------
+                agg_timestamp, agg_prob = _resolve_cluster(cluster_picks, method)
                 picker_names = [p['picker'] for p in cluster_picks]
-                
+
                 # Create aggregated pick
                 aggregated_pick = {
                     "id": f"{pick1['network']}.{pick1['station']}.",
                     "network": pick1['network'],
                     "station": pick1['station'],
                     "channel": pick1['channel'],
-                    "timestamp": avg_timestamp,
-                    "prob": avg_prob,
+                    "timestamp": agg_timestamp,
+                    "prob": agg_prob,
                     "type": phase_type,
                     "picker": f"AGGREGATED({len(cluster_picks)}pickers)",
                     "contributing_pickers": ",".join(picker_names),
-                    "num_contributing_pickers": len(cluster_picks)
+                    "num_contributing_pickers": len(cluster_picks),
+                    "aggregation_method": method
                 }
-                
+
                 aggregated_picks.append(aggregated_pick)
                 used_indices.update(cluster_indices)
-    
+
     aggregated_df = pd.DataFrame(aggregated_picks)
-    
+
     if not aggregated_df.empty:
         print(f"\n✓ Aggregated picks created: {len(aggregated_df)}")
-        
+
         phase_dist = Counter(aggregated_df['type'])
         print(f"  P-waves: {phase_dist.get('p', 0)}")
         print(f"  S-waves: {phase_dist.get('s', 0)}")
-        
+
         picker_dist = Counter(aggregated_df['num_contributing_pickers'])
         print("\nPicks by number of contributing pickers:")
         for num, count in sorted(picker_dist.items()):
@@ -938,7 +1047,7 @@ def aggregate_picks(all_picks_data, min_pickers=MIN_PICKERS_FOR_AGGREGATION,
     else:
         print("\n⚠ No aggregated picks found")
         print("  Try: Decrease min_pickers or increase time_tolerance")
-    
+
     return aggregated_df
 
 
@@ -1142,8 +1251,8 @@ def main():
                 print(f"✗ Error processing {picker_name}: {e}")
     
     # STEP 4: Create aggregated picks
-    aggregated_picks = aggregate_picks(all_picks_data, MIN_PICKERS_FOR_AGGREGATION, 
-                                      TIME_TOLERANCE_SECONDS)
+    aggregated_picks = aggregate_picks(all_picks_data, MIN_PICKERS_FOR_AGGREGATION,
+                                      TIME_TOLERANCE_SECONDS, AGGREGATION_METHOD)
     
     # STEP 5: Process aggregated picks with GAMMA
     if not aggregated_picks.empty:
@@ -1226,6 +1335,7 @@ def main():
         f.write(f"Time range: {TSTART} to {TEND}\n")
         f.write(f"Networks: {ZZ_NETWORK}, {PR_NETWORK}\n")
         f.write(f"Channels: {CHANNELS}\n")
+        f.write(f"Aggregation method: {AGGREGATION_METHOD}\n")
         f.write(f"Total cached data chunks: {len(cached_data)}\n")
         f.write(f"Total stations: {len(stations)}\n")
         f.write(f"Total pickers processed: {len(all_picks_data)}\n\n")
