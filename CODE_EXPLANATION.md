@@ -211,8 +211,8 @@ def run_picks_on_cached_data(cached_data, network, picker, picker_name):
             # Runs the ML model
             picks = picker.classify(
                 batch,
-                P_threshold=0.1,  # Minimum probability for P wave
-                S_threshold=0.1   # Minimum probability for S wave
+                P_threshold=0.15,  # Minimum probability for P wave
+                S_threshold=0.15   # Minimum probability for S wave
             )
             
             # Stores pick information
@@ -222,9 +222,9 @@ def run_picks_on_cached_data(cached_data, network, picker, picker_name):
 
 **Understanding thresholds:**
 ```python
-P_THRESHOLD = 0.1  # Lower = more picks (more false positives)
+P_THRESHOLD = 0.15  # Lower = more picks (more false positives)
                    # Higher = fewer picks (miss real events)
-S_THRESHOLD = 0.1  # S waves are harder to detect
+S_THRESHOLD = 0.15  # S waves are harder to detect
                    # Often kept lower than P threshold
 ```
 
@@ -532,8 +532,8 @@ PR_NETWORK = "YOUR_OTHER_NETWORK"
 #### 3. Quality Control
 ```python
 # Detection sensitivity
-P_THRESHOLD = 0.1  # Lower = more sensitive
-S_THRESHOLD = 0.1
+P_THRESHOLD = 0.15  # Lower = more sensitive
+S_THRESHOLD = 0.15
 
 # Aggregation requirements
 MIN_PICKERS_FOR_AGGREGATION = 2  # Higher = more confident
