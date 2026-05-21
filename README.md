@@ -146,7 +146,7 @@ PR_PICKERS = {
 
 ```python
 MIN_PICKERS_FOR_AGGREGATION = 2  # At least 2 pickers must detect the same pick
-TIME_TOLERANCE_SECONDS = 0.5     # Picks within 0.5 seconds are considered the same
+TIME_TOLERANCE_SECONDS = 2     # Picks within 0.5 seconds are considered the same
 ```
 
 **Example:** If 3 pickers detect a P-wave arrival at a station within 0.5 seconds of each other, these are combined into a single, more reliable aggregated pick.
@@ -161,7 +161,7 @@ GAMMA_CONFIG = {
     "y(km)": (1500, 2500),     # Search area in North-South direction
     "z(km)": (0, 100),         # Depth range
     "vel": {"p": 7, "s": 4},   # P and S wave velocities (km/s)
-    "min_picks_per_eq": 8,     # Minimum picks to define an event
+    "min_picks_per_eq": 4,     # Minimum picks to define an event
     "dbscan_eps": 20,          # Time clustering parameter (seconds)
 }
 ```
@@ -312,7 +312,7 @@ Adjust these parameters to change how picks are combined:
 
 ```python
 MIN_PICKERS_FOR_AGGREGATION = 3  # More conservative (higher confidence)
-TIME_TOLERANCE_SECONDS = 3.0     # Stricter time matching
+TIME_TOLERANCE_SECONDS = 2.0     # Stricter time matching
 ```
 
 ## Scientific Background
