@@ -303,11 +303,11 @@ def aggregate_picks(all_picks_data, min_pickers=MIN_PICKERS_FOR_AGGREGATION,
 ```python
 # More conservative (higher confidence, fewer picks)
 MIN_PICKERS_FOR_AGGREGATION = 3
-TIME_TOLERANCE_SECONDS = 3.0
+TIME_TOLERANCE_SECONDS = 2.0
 
 # More liberal (lower confidence, more picks)
 MIN_PICKERS_FOR_AGGREGATION = 2
-TIME_TOLERANCE_SECONDS = 8.0
+TIME_TOLERANCE_SECONDS = 3.0
 ```
 
 ---
@@ -336,7 +336,7 @@ def setup_gamma_config():
         # Clustering parameters
         "dbscan_eps": 20,           # Time window (seconds)
         "dbscan_min_samples": 3,    # Minimum picks to form cluster
-        "min_picks_per_eq": 8,      # Minimum picks for valid event
+        "min_picks_per_eq": 4,      # Minimum picks for valid event
         
         # Quality thresholds
         "max_sigma11": 2.0,   # Maximum uncertainty in space
@@ -537,10 +537,10 @@ S_THRESHOLD = 0.15
 
 # Aggregation requirements
 MIN_PICKERS_FOR_AGGREGATION = 2  # Higher = more confident
-TIME_TOLERANCE_SECONDS = 5.0      # Larger = more grouping
+TIME_TOLERANCE_SECONDS = 2.0      # Larger = more grouping
 
 # Event requirements
-GAMMA_CONFIG["min_picks_per_eq"] = 8  # Minimum picks per earthquake
+GAMMA_CONFIG["min_picks_per_eq"] = 4  # Minimum picks per earthquake
 ```
 
 #### 4. Performance Tuning
