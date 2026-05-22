@@ -335,9 +335,9 @@ By aggregating their predictions, we:
 2. Picks at the same station within `TIME_TOLERANCE_SECONDS` are clustered
 3. Only clusters with ≥ `MIN_PICKERS_FOR_AGGREGATION` picks are kept
 4. Time and probability are calculated based on selected aggregation strategy from three options:
-   "mean", Simple arithmatic mean of all picks in the cluster, treats all pickers and models equally
-   "highest_prob", Uses the timestamp and probability of the pick with highest probability in the cluster while still requiring min_pickers agreement to keep the pick 
-   "weighted_mean", Picks are weighted based on probability, higher confidence picks pull the timestamp and the reported probability more than lower-confidence picks
+- "mean", Simple arithmatic mean of all picks in the cluster, treats all pickers and models equally
+- "highest_prob", Uses the timestamp and probability of the pick with highest probability in the cluster while still requiring min_pickers agreement to keep the pick 
+- "weighted_mean", Picks are weighted based on probability, higher confidence picks pull the timestamp and the reported probability more than lower-confidence picks
 5. GAMMA associates picks after aggregation into earthquake events to develop and ensemble catalog
 
 ## Contributing
