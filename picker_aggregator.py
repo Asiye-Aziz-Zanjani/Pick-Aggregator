@@ -5,15 +5,18 @@ Picker Aggregator: Multi-model Machine Learning Picker for Integrated Earthquake
 Developed by: Asiye Aziz Zanjani, 2025
 
 Citation:
-    Picker Aggregator: A Multi-model Ensembel of Machine Learning Pickers for Seismic Phase
-    Detection and Association to Generate Comprehensive Seismic Catalog North of Puerto Rico 
-    and Virgin Islands, Asiye Aziz Zanjani and Heather R. DeShon (2025)
+    Pick Aggregator: A Multi-Model Ensemble of Machine Learning Pickers to Generate an 
+    Onshore-Offshore Seismic Catalog for Puerto Rico and the Virgin Islands,
+    Asiye Aziz Zanjani and Heather R. DeShon, Seismological Research Letters, (2026)
 
 Description:
-    This script combines multiple machine learning models to detect seismic phases 
-    (P and S waves) from seismograms. It downloads waveform data, runs multiple 
-    picker models, aggregates their predictions, and creates an earthquake catalog 
-    using the GAMMA association algorithm.
+    This script first downloads waveform data and performs parallel processing of 
+    seismograms using multiple machine learning models and phase pickers to detect seismic phases 
+    (P and S waves). It then aggregates the detected picks according to the selected aggregation  
+    strategy and creates an earthquake catalog using the GAMMA association algorithm. The goal 
+    is to combine the generalization of ML models on out-of-distribution data by aggregating detections  
+    from multiple pickers and models, thereby produging a more complete catalog while reducing false 
+    detections using a cross-model validation strategy.
 
 Quick Start:
     1. Modify the configuration parameters below (marked with USER CONFIGURATION)
