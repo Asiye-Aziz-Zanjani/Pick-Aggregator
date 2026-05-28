@@ -146,10 +146,10 @@ PR_PICKERS = {
 
 ```python
 MIN_PICKERS_FOR_AGGREGATION = 2  # At least 2 pickers must detect the same pick
-TIME_TOLERANCE_SECONDS = 2     # Picks within 0.5 seconds are considered the same
+TIME_TOLERANCE_SECONDS = 2     # Picks within 2 seconds are considered the same
 ```
 
-**Example:** If 3 pickers detect a P-wave arrival at a station within 0.5 seconds of each other, these are combined into a single, more reliable aggregated pick.
+**Example:** If 3 pickers detect a P-wave arrival at a station within 2 seconds of each other, these are combined into a single, more reliable aggregated pick.
 
 ### GAMMA Configuration
 
@@ -279,7 +279,7 @@ Keep pickers that work well for your data type and seismic setting.
 - Reduce `MIN_PICKERS_FOR_AGGREGATION` to 1
 - Adjust GAMMA parameters
 
-### Getting Help
+### Check the following:
 
 1. Check the processing summary file for diagnostic information
 2. Review individual picker outputs before aggregation
@@ -292,8 +292,6 @@ Keep pickers that work well for your data type and seismic setting.
 2. **Cache Data**: Run once to download and cache, then reuse
 3. **Parallel Processing**: Adjust `PARALLEL_WORKERS` based on your CPU
 4. **Batch Processing**: Larger batches are more efficient (if RAM allows)
-
-## Advanced Usage
 
 ### Running Specific Picker Combinations Only
 
@@ -315,9 +313,7 @@ MIN_PICKERS_FOR_AGGREGATION = 3  # More conservative (higher confidence)
 TIME_TOLERANCE_SECONDS = 2.0     # Stricter time matching
 ```
 
-## Scientific Background
-
-### Why Multiple Pickers?
+### Why Multiple Pickers and Models?
 
 Different machine learning models have different strengths:
 - **OBSTransformer**: Optimized for ocean bottom seismometer noise
@@ -332,17 +328,13 @@ By aggregating their predictions, we:
 ### The Aggregation Process
 
 1. Each picker/model independently detects P and S waves
-2. Picks at the same station within `TIME_TOLERANCE_SECONDS` are clustered
+2. Picks at the same station and the same phase type within `TIME_TOLERANCE_SECONDS` are clustered
 3. Only clusters with ≥ `MIN_PICKERS_FOR_AGGREGATION` picks are kept
 4. Time and probability are calculated based on selected aggregation strategy from three options:
 - "mean", Simple arithmatic mean of all picks in the cluster, treats all pickers and models equally
 - "highest_prob", Uses the timestamp and probability of the pick with highest probability in the cluster while still requiring min_pickers agreement to keep the pick 
 - "weighted_mean", Picks are weighted based on probability, higher confidence picks pull the timestamp and the reported probability more than lower-confidence picks
 5. GAMMA associates picks after aggregation into earthquake events to develop and ensemble catalog
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit issues or pull requests.
 
 ## Contact
 
