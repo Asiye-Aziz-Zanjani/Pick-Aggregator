@@ -9,7 +9,7 @@ Get up and running with Picker Aggregator in 15 minutes!
 - 16GB RAM minimum
 - Stable internet connection
 
-## Installation (5 minutes)
+## Installation
 
 ### 1. Create and activate virtual environment
 
@@ -40,7 +40,7 @@ git clone https://github.com/yourusername/picker-aggregator.git
 cd picker-aggregator
 ```
 
-## First Run (10 minutes)
+## First Run 
 
 ### 1. Test with a short time period
 
@@ -68,15 +68,15 @@ You should see output like:
 ```
 === Starting Optimized Multi-Picker Seismic Analysis ===
 
-=== STEP 1: Downloading and caching data ===
+STEP 1: Downloading and caching data
 Downloading and caching data from 2015-05-15 to 2015-05-17
 Downloaded and cached 156 traces for 2015-05-15 00:00:00 to 2015-05-15 01:00:00
 ...
 
-=== STEP 2: Getting station information ===
+STEP 2: Getting station information
 Total stations found: 43
 
-=== STEP 3: Processing pickers in parallel ===
+STEP 3: Processing pickers in parallel
 Starting OBSTransformer_obst2024 for network ZZ
 ...
 ```
@@ -208,12 +208,12 @@ See the full README.md for details on adapting to your study area:
 
 After your first successful run:
 
-- [ ] `PICKER_COMPARISON/` directory exists
-- [ ] `aggregated-catalog/` subdirectory exists
-- [ ] `catalog.csv` contains earthquake events
-- [ ] `picks.csv` contains phase detections
-- [ ] `processing_summary.txt` shows no errors
-- [ ] `cached_waveforms/` contains data files
+- `PICKER_COMPARISON/` directory exists
+- `aggregated-catalog/` subdirectory exists
+- `catalog.csv` contains earthquake events
+- `picks.csv` contains phase detections
+- `processing_summary.txt` shows no errors
+- `cached_waveforms/` contains data files
 
 ## Getting Help
 
@@ -307,8 +307,6 @@ Typical processing times (for 2 days of data, 43 stations):
 4. **Check logs**: Review output messages for warnings
 5. **Validate results**: Compare with existing catalogs if available
 
-## What's Next?
-
 After your first successful run:
 
 1. **Analyze your catalog**: Plot earthquake locations, magnitudes over time
@@ -342,7 +340,7 @@ plt.savefig('earthquake_map.png')
 print("Map saved to earthquake_map.png")
 ```
 
-## Ready for Production?
+## Next Steps
 
 Once you're comfortable with the basic workflow:
 
@@ -350,5 +348,3 @@ Once you're comfortable with the basic workflow:
 2. Review [CODE_EXPLANATION.md](CODE_EXPLANATION.md) for advanced usage
 3. Check [INSTALLATION.md](INSTALLATION.md) for HPC setup
 4. Customize parameters for your specific region
-
-Happy earthquake detecting! 🌍
