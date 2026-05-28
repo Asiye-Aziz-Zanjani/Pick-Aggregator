@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Picker Aggregator: Multi-model Machine Learning Picker to Develop Ensemble Earthquake Catalog
+Pick Aggregator: Multi-model Machine Learning Picker to Develop Ensemble Earthquake Catalog
 
 Developed by: Asiye Aziz Zanjani, 2025
 
