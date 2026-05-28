@@ -314,7 +314,7 @@ sns.set_style("ticks")
 # --------------------------------------------------------------------------------
 # GLOBAL SETUP
 # --------------------------------------------------------------------------------
-print("Initializing Picker Aggregator...")
+print("Initializing Pick Aggregator...")
 print(f"SeisBench cache: {seisbench.cache_root}")
 
 # Initialize coordinate reference systems for lat/lon to UTM conversion
@@ -1174,7 +1174,7 @@ def runevents(picks, stations, output_dir, picker_combination):
 
 def main():
     """
-    Main execution function - orchestrates the entire workflow.
+    Main execution function for the entire workflow.
     
     Workflow:
         1. Download and cache waveform data
