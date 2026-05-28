@@ -1,4 +1,4 @@
-# Installation Guide for Picker Aggregator
+# Installation Guide for Pick Aggregator
 
 This guide provides detailed installation instructions for different operating systems and computing environments.
 
